@@ -1,0 +1,57 @@
+.bar-text-notch {
+    font-size: 16px;
+    min-width: 20px;
+    max-width: 20px;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0px;
+    padding: 0px;
+}
+
+.bar-text-notch-image {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.bar-text-main {
+    font-size: 20px;
+    position: relative;
+    vertical-align: middle;
+}
+
+.bar-text-notch pre {
+    display: inline-block;
+    margin: 0px;
+    padding: 0px;
+}
+
+.bar-text-name {
+    width: 40px;
+    min-width: 40px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.bar-text-container {
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    user-select: none;
+    font-family: monospace;
+    display: table;
+}
+
+.bar-text-container span {
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    display: table-cell;
+    vertical-align: middle;
+}
