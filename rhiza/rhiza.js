@@ -1,4 +1,8 @@
 /*
+    Core library for the other plugins. Utilities, initialization order, some minimal setup.
+*/
+
+/*
 TODO:
     allow specifying:
         fireAfter, fireBefore - for ordering message handlers;
