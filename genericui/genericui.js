@@ -7,7 +7,7 @@ TODO:
 */
 
 window.genericUI = function() {
-    window.rhiza.loadStylesheet('genericUI', 'plugins/genericui/main.css');
+    window.rhiza.loadStylesheet('genericUI', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@main/genericui/main.css');
 
     class TransientRenderState {
         constructor(panelNameList) {

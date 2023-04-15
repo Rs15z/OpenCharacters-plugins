@@ -1,5 +1,5 @@
 window.notekeeper = function() {
-    window.rhiza.loadStylesheet('notekeeper', '/plugins/notekeeper/notekeeper.css');
+    window.rhiza.loadStylesheet('notekeeper', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@main/notekeeper/notekeeper.css');
 
     const indexingAlphabet = '1234567890abcdefghijklmnopqrstuvwxyz';
     let reverseIndexingAlphabet = {};
