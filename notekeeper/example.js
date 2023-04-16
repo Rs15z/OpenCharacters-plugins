@@ -1,7 +1,7 @@
-await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.1/rhiza/rhiza.js');
-await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.1/genericui/genericui.js');
+await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.2/rhiza/rhiza.js');
+await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.2/genericui/genericui.js');
 
-await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.1/notekeeper/notekeeper.js');
+await import('https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.2/notekeeper/notekeeper.js');
 
 
 window.config.notekeeper = {

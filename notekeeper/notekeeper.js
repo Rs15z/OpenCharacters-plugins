@@ -1,5 +1,5 @@
 window.notekeeper = function() {
-  window.rhiza.loadStylesheet('notekeeper', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.1/notekeeper/notekeeper.css');
+  window.rhiza.loadStylesheet('notekeeper', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.2/notekeeper/notekeeper.css');
 
   const indexingAlphabet = '1234567890abcdefghijklmnopqrstuvwxyz';
   let reverseIndexingAlphabet = {};
@@ -53,7 +53,7 @@ window.notekeeper = function() {
     stats: [],
     defaultReminder: null,
     allowUserTrackerCreation: false,
-    version: "0.0.1",
+    version: "0.0.2",
   };
 
   // i don't yet get namespacing of js. sorry. i will some day, but not yet, not yet.
