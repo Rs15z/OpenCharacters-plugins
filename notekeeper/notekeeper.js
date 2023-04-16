@@ -44,7 +44,7 @@ window.notekeeper = function() {
         "is",
         "changed to", "change to",
         "set to",
-        "becomes",
+        "set",
     ];
 
     // Keeping stats as a list gives them an explicit order. I don't want everything to jump around just because you removed a stat.
@@ -53,6 +53,7 @@ window.notekeeper = function() {
         stats: [],
         defaultReminder: null,
         allowUserTrackerCreation: false,
+        version: "0.0.1",
     };
 
     // i don't yet get namespacing of js. sorry. i will some day, but not yet, not yet.
@@ -99,7 +100,6 @@ window.notekeeper = function() {
                 v.note = v.note || "";
                 v.noteMakerType = v.noteMakerType || "none";
 
-                console.log(v.note);
                 if ((typeof v.note === 'string') || (v.note instanceof String)) {
                     v.noteMakerType = "verbatim";
                 } else if (Array.isArray(v.note)) {
@@ -149,17 +149,20 @@ window.notekeeper = function() {
             },
             remove: function(v, identifier) {
                 // int, char, or item name
-                if (!Number.isInteger(identifier)) {
-                    if (identifier.length == 1) {
-                        identifier = reverseIndexingAlphabet[identifier];
-                    }
-                    else {
-                        identifier = v.items.indexOf(identifier);
-                    }
+                let index = null;
+                
+                if (Number.isInteger(identifier)) {
+                    index = identifier;
+                } else if (identifier.length == 1) {
+                    index = reverseIndexingAlphabet[identifier];
+                } else {
+                    identifier = identifier.trim();
+                    index = v.items.findIndex((item) => {return item.name == identifier});
                 }
 
-                if ((identifier == null) || (identifier < 0) || (identifier >= v.items.length)) {
-                    return;
+                if ((index == null) || (index < 0) || (index >= v.items.length)) {
+                    console.log(identifier);
+                    return `"Identifier ${identifier} cannot be found and won't be removed."`
                 }
 
                 v.items.splice(identifier, 1);
@@ -220,7 +223,6 @@ window.notekeeper = function() {
             let items = [];
             for (let i = 0; i < stat.items.length; ++i) {
                 let item = stat.items[i];
-                console.log(item);
 
                 let altParameter = "";
                 if (item.note != null) {
@@ -234,7 +236,7 @@ window.notekeeper = function() {
                 <div class="tree-text-container">
                     <div class="tree-text-header">${stat.representation.name}</div>
                     ${items.join("")}
-                </div>`;
+                </div><br>`;
 
             return m;
         }
@@ -340,7 +342,10 @@ window.notekeeper = function() {
     function addToStatByReference(stat, delta) {
         let statType = statTypes[stat.type];
 
-        statType.add(stat, delta);
+        let result = statType.add(stat, delta);
+        if (result) {
+            return result;
+        }
 
         saveToStorage();
         window.rhiza.render();
@@ -349,7 +354,10 @@ window.notekeeper = function() {
     function setStatByReference(stat, newValue) {
         let statType = statTypes[stat.type];
 
-        statType.set(stat, newValue);
+        let result = statType.set(stat, newValue);
+        if (result) {
+            return result;
+        }
 
         saveToStorage();
         window.rhiza.render();
@@ -358,7 +366,10 @@ window.notekeeper = function() {
     function removeFromStatByReference(stat, delta) {
         let statType = statTypes[stat.type];
 
-        statType.remove(stat, delta);
+        let result = statType.remove(stat, delta);
+        if (result) {
+            return result;
+        }
 
         saveToStorage();
         window.rhiza.render();
@@ -406,11 +417,10 @@ window.notekeeper = function() {
     }
 
     function initialize(config) {
-        notekeeperState = window.rhiza.mergeAttributes(notekeeperState, config || {});
-        
+        window.rhiza.mergeAttributes(notekeeperState, config || {});
         let namedStorage = window.rhiza.getNamedThreadStorage(storageName);
         if (namedStorage) {
-            notekeeperState = window.rhiza.mergeAttributes(namedStorage);
+            window.rhiza.mergeAttributes(notekeeperState, namedStorage);
         } else {
             notekeeperState.stats = notekeeperState.defaultStats || [];
         }
@@ -427,7 +437,6 @@ window.notekeeper = function() {
             }
         }
 
-        // I just want to run a list evaluation, not this._.
         while(invalidStatIndices.length) {
             notekeeperState.stats.splice(invalidStatIndices.pop(), 1);
         }
@@ -464,7 +473,10 @@ window.notekeeper = function() {
 
     function handleChatCommand(messageText) {
         if (!messageText.startsWith(commandPrefix)) {
-            return false;
+            return {
+                handled: false,
+                error: null,
+            };
         }
 
         messageText = messageText.slice(commandPrefix.length).trim();
@@ -489,16 +501,30 @@ window.notekeeper = function() {
                             continue;
                         }
                         messageText = messageText.slice(verb.length).trim();
-                        method(stat, messageText);
+                        let error = method(stat, messageText);
 
-                        return true;
+                        return {
+                            handled: true,
+                            error: error,
+                        };
                     }
                 }
 
-                return false;
+                return {
+                    handled: true,
+                    error: `Unknown verb. Please style your command as "/nk ${commandName} add value" (or "remove", or "set" instead of "add").`
+                };
             }
         }
-        return false;
+
+        let knownStatCommands = [];
+        for (const stat of notekeeperState.stats) {
+            knownStatCommands = knownStatCommands.concat(stat.commandNames);
+        }
+        return {
+            handled: true,
+            error: `Unknown command. The following commands are known: [${knownStatCommands}.join(", ")].`
+        };
     }
 
     function buildReminderMessage() {
@@ -523,8 +549,16 @@ window.notekeeper = function() {
             return;
         }
 
-        if (handleChatCommand(message.content)) {
+        let result = handleChatCommand(message.content);
+        console.log(result);
+        if (result.handled) {
             message.hiddenFrom = ["ai", "user"];
+            message.expectsReply = false;
+
+            if (result.error) {
+                window.rhiza.warnUser(result.error);
+            }
+
             return;
         }
 

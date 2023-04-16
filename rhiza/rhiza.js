@@ -1,19 +1,12 @@
 /*
-    Core library for the other plugins. Utilities, initialization order, some minimal setup.
-*/
-
-/*
 TODO:
-    allow specifying:
+    allow specifying per-plugin:
         fireAfter, fireBefore - for ordering message handlers;
         initAfter, initBefore - for initialization order (e.g. most plugins want to be initialized after genericUI);
         renderAfter, renderBefore - mostly useless, I think, but surely someone can find a use for conditionally mutating the renderState.
 
     allow literally anything to register as a renderer, don't just hog it all with genericUI
 */
-
-
-// TODO: add proper (alert/ai-hidden message) feedback, don't just scream into the console void
 
 
 window.config = {};
@@ -115,45 +108,29 @@ window.rhiza = function() {
         return to;
     }
 
-    // TODO: switch over to proper thread-local storage
-    //       which is apparently already available
-    //       devil works fast, but rocca works faster
+    // Just in case I'll need to, in some capacity, sanitize the storage, or the interface was to change
     function getThreadStorage() {
-        let m = oc.thread.messages.at(0);
-        if (!m || (m.author != "system") || !m.content.startsWith(storageSentinelPhrase)) {
-            storage = {
-                config: {}
-            };
-            m = {
-                author: "system",
-                hiddenFrom: ["ai", "user"],
-                expectsReply: false,
-                avatar: systemAvatar,
-                content: storageSentinelPhrase + JSON.stringify(storage),
-            };
-            oc.thread.messages.unshift(m);
-        } else {
-            storage = JSON.parse(m.content.slice(storageSentinelPhrase.length));
+        if (!oc.thread.customData.rhiza) {
+            oc.thread.customData.rhiza = {};
         }
-
-        return m;
+        storage = getDeepCopy(oc.thread.customData.rhiza);
+        return storage;
     }
 
     function setThreadStorage() {
-        let newMessage = storageSentinelPhrase + JSON.stringify(storage);
-        getThreadStorage().content = newMessage;
+        oc.thread.customData.rhiza = getDeepCopy(storage);
     }
 
     function getDeepCopy(object) {
-        return JSON.parse(JSON.stringify(object));
+        if (object) {
+            return JSON.parse(JSON.stringify(object));
+        } else {
+            return null;
+        }
     }
 
     // Explicitly meant to be a copy, not a reference. Mutate the storage all you want, but you have to commit it to Rhiza to save it.
     function getNamedThreadStorage(name) {
-        if (!storage.hasOwnProperty(name)) {
-            storage[name] = {};
-        }
-
         return getDeepCopy(storage[name]);
     }
 
@@ -272,12 +249,9 @@ ${persistenceWarningFooter}`
         getThreadStorage();
 
         configs = getDeepCopy(window.config);
-        console.log(configs);
-
+        
         let storageConfigs = getDeepCopy(storage.config);
         mergeAttributes(configs, storageConfigs);
-        console.log(storageConfigs);
-        console.log(configs);
 
         requestConfig();
 
@@ -302,6 +276,7 @@ ${persistenceWarningFooter}`
 
     function render() {
         // TODO: This is temporary. I cannot stress how temporary this is.
+        // Also, ordering.
 
         let plugins = Object.values(registeredPlugins);
 
@@ -325,9 +300,16 @@ ${persistenceWarningFooter}`
         }
     }
 
-    // TODO: turn it into an actual system message, or something.
     function warnUser(warning) {
-        console.log(warning);
+        let m = {
+            author: "system",
+            hiddenFrom: ["ai"],
+            expectsReply: false,
+            avatar: systemAvatar,
+            content: warning,
+        };
+
+        oc.thread.messages.push(m);
     }
 
     function substituteTemplates(s) {
