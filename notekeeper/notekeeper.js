@@ -1,5 +1,5 @@
 window.notekeeper = function() {
-  window.rhiza.loadStylesheet('notekeeper', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.2/notekeeper/notekeeper.css');
+  window.rhiza.loadStylesheet('notekeeper', 'https://cdn.jsdelivr.net/gh/Rs15z/OpenCharacters-plugins@0.0.3/notekeeper/notekeeper.css');
 
   const indexingAlphabet = '1234567890abcdefghijklmnopqrstuvwxyz';
   let reverseIndexingAlphabet = {};
@@ -53,7 +53,7 @@ window.notekeeper = function() {
     stats: [],
     defaultReminder: null,
     allowUserTrackerCreation: false,
-    version: "0.0.2",
+    version: "0.0.3",
   };
 
   // i don't yet get namespacing of js. sorry. i will some day, but not yet, not yet.
@@ -63,7 +63,7 @@ window.notekeeper = function() {
     if (value.current < 0) {
       value.current = 0;
     }
-    if ((value.current > value.maximum) && !value.canOverflow) {
+    if ((value.maximum != null) && (value.current > value.maximum) && !value.canOverflow) {
       value.current = value.maximum;
     }
   }
@@ -150,7 +150,7 @@ window.notekeeper = function() {
       remove: function(v, identifier) {
         // int, char, or item name
         let index = null;
-        
+
         if (Number.isInteger(identifier)) {
           index = identifier;
         } else if (identifier.length == 1) {
@@ -172,6 +172,13 @@ window.notekeeper = function() {
 
   let renderers = {
     "hidden": function(stat) {return null;},
+
+    "numerical": function(stat) {
+      let representation = stat.representation;
+      let m = `<div>${representation.name}: ${stat.current}</div>`;
+      return m;
+    },
+
     "bar-text": function(stat) {
       let representation = stat.representation;
 
@@ -454,7 +461,7 @@ window.notekeeper = function() {
     for (let stat of notekeeperState.stats) {
       let representationDescription = stat.representation;
       if (!representationDescription) {
-        window.rhiza.warnUser(`Stat ${stat.name} is unrenderable.`);
+        window.rhiza.warnUser(`Stat ${stat.name} has no representation provided.`);
         continue;
       }
       let renderer = renderers[representationDescription.type];
