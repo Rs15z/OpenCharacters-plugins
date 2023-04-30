@@ -16,8 +16,10 @@ window.rhiza = function() {
   const storageSentinelPhrase = "Rhiza storage: ";
   const persistentSentinelPhrase = "Keep all.";
   const systemAvatar = {
-    url: "https://i.imgur.com/O0rZWaM.png",
+    url: "https://i.imgur.com/DVzjsl7.png",
   };
+  const defaultRenderPanel = "rhiza";
+  const version = "0.0.4";
 
   let storage = {};
 
@@ -27,6 +29,10 @@ window.rhiza = function() {
   let registeredPlugins = {};
 
   let persistentConfigs = false;
+
+  let mediaPermissionNecessary = false;
+  let mediaPermissionGiven = false;
+
 
   function getConfigs() {
     if (persistentConfigs) {
@@ -173,20 +179,14 @@ Please send corrected configuration as the next message.`;
       persistenceWarningFooter = `If you would prefer to save secrets - e.g. access tokens - into the thread as well (convenient, but EXTREMELY not recommended), please preface your {}-bracketed message with, exact quote, "${persistentSentinelPhrase}".`;
     }
 
-    let m = {
-      author: "system",
-      hiddenFrom: ["ai"],
-      expectsReply: false,
-      avatar: systemAvatar,
-      content: `
+    warnUser(`
 ${messageHeader}
 The values required are:
 <pre>{
 \t${configsDescriptions.join(",\n")}
 }</pre>
 Please provide them in the next message in the exact format presented.
-${persistenceWarningFooter}`
-    };
+${persistenceWarningFooter}`);
 
     oc.thread.messages.push(m);
 
@@ -249,7 +249,7 @@ ${persistenceWarningFooter}`
     getThreadStorage();
 
     configs = getDeepCopy(window.config);
-    
+
     let storageConfigs = getDeepCopy(storage.config);
     mergeAttributes(configs, storageConfigs);
 
@@ -258,6 +258,10 @@ ${persistenceWarningFooter}`
     for (let [name, p] of Object.entries(registeredPlugins)) {
       console.log("Initializing " + name);
 
+      if (name == "rhiza") {
+        continue;
+      }
+
       // TODO: ordering
       let initFunction = p.initialize;
       if (initFunction) {
@@ -265,16 +269,29 @@ ${persistenceWarningFooter}`
       }
 
       // TODO: ordering
-      let handler = p.onMessageAdded;
-      if (handler) {
-        oc.thread.on("MessageAdded", handler);
+      let addHandler = p.onMessageAdded;
+      if (addHandler) {
+        oc.thread.on("MessageAdded", addHandler);
+      }
+
+      let streamHandler = p.onStreamingMessage;
+      if (streamHandler) {
+          oc.thread.on("StreamingMessage", streamHandler);
       }
     }
 
-    render();
+    renderAll();
   }
 
-  function render() {
+  function render(renderState) {
+    if (mediaPermissionNecessary && !mediaPermissionGiven) {
+      let rep = '<div style="height=200px; width=100%" onclick="window.rhiza.giveMediaPermission();">Click to grant<br>media permissions<br>(Playing music, TTS...)</div>';
+      renderState.appendToPanel(defaultRenderPanel, rep);
+    }
+    return renderState;
+  }
+
+  function renderAll() {
     // TODO: This is temporary. I cannot stress how temporary this is.
     // Also, ordering.
 
@@ -283,6 +300,15 @@ ${persistenceWarningFooter}`
     if (window.genericUI) {
       window.genericUI.renderUI(plugins);
     }
+  }
+
+  function requireMediaPermission() {
+    mediaPermissionNecessary = true;
+  }
+
+  function giveMediaPermission() {
+    mediaPermissionGiven = true;
+    renderAll();
   }
 
   function loadStylesheet(name, path) {
@@ -306,6 +332,7 @@ ${persistenceWarningFooter}`
       hiddenFrom: ["ai"],
       expectsReply: false,
       avatar: systemAvatar,
+      name: "Rhiza",
       content: warning,
     };
 
@@ -317,6 +344,8 @@ ${persistenceWarningFooter}`
   }
 
   return {
+    version,
+
     initialize,
     render,
 
@@ -325,6 +354,8 @@ ${persistenceWarningFooter}`
 
     registerPlugin,
     requireConfig,
+    requireMediaPermission,
+    giveMediaPermission,
     loadStylesheet,
     warnUser,
 
@@ -333,3 +364,6 @@ ${persistenceWarningFooter}`
     substituteTemplates,
   };
 }();
+
+
+window.rhiza.registerPlugin("rhiza", window.rhiza);

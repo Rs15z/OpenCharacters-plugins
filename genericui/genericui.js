@@ -13,12 +13,12 @@ window.genericUI = function() {
     constructor(panelNameList) {
       this.panelsAsList = [];
       this.panelsByName = {};
-      
+
       for (let panelName of panelNameList) {
         this.getPanel(panelName);
       }
     }
-    
+
     getPanel(name) {
       let panel = this.panelsByName[name];
       if (!panel) {
@@ -31,7 +31,7 @@ window.genericUI = function() {
       }
       return panel;
     }
-  
+
     appendToPanel(name, content) {
       let panel = this.getPanel(name);
       if (panel.content == null) {
@@ -49,12 +49,19 @@ window.genericUI = function() {
   function renderUI(plugins) {
     let renderState = new TransientRenderState(defaultPanelNames);
 
+
     for (let p of plugins) {
       let renderer = p.render;
       if (renderer) {
         renderer(renderState);
       }
     }
+
+    if (renderState.panelsAsList.length == 0) {
+        oc.window.hide();
+        return;
+    }
+    oc.window.show();
 
     let m = "<div class='genericui-grid'>";
 
@@ -70,16 +77,16 @@ window.genericUI = function() {
 
     document.body.innerHTML = m;
   }
-  
+
   function initialize() {
     document.body.classList.add("genericui-body");
     oc.window.show();
   }
-  
+
   let p = { initialize, renderUI };
 
   window.rhiza.registerPlugin("GenericUI", p);
-  
+
   return p;
 }();
 
